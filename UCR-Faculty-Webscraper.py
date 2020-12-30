@@ -230,4 +230,71 @@ df = df.iloc[1:]   #remove row of '!' from permanent df
 print('Done')
 
 
-display(df)
+dfCopy = df.copy()
+display(dfCopy)
+
+
+
+import random
+import nltk
+from nltk.corpus import names
+from nltk.tokenize import SpaceTokenizer
+
+
+#nltk.download()
+
+tk = SpaceTokenizer()
+
+
+
+def gender_features(word):
+    return {'last_letter':word[-1]}
+
+# preparing a list of examples and corresponding class labels. 
+labeled_names = (
+    [(name, 'male') for name in names.words('male.txt')] +
+    [(name, 'female') for name in names.words('female.txt')]
+    ) 
+  
+random.shuffle(labeled_names) 
+  
+# we use the feature extractor to process the names data. 
+featuresets = [
+    (gender_features(n), gender) for (n, gender) in labeled_names
+    ] 
+  
+# Divide the resulting list of feature 
+# sets into a training set and a test set. 
+train_set = featuresets[2000:] 
+test_set = featuresets[:2000] 
+  
+# The training set is used to  
+# train a new "naive Bayes" classifier. 
+classifier = nltk.NaiveBayesClassifier.train(train_set) 
+  
+print(classifier.classify(gender_features('Sandra'))) 
+  
+# output should be 'male' 
+#print(nltk.classify.accuracy(classifier, train_set)) 
+  
+# it shows accurancy of our classifier and  
+# train_set. which must be more than 99 %  
+
+#classifier.show_most_informative_features(10) 
+
+numF, numM = 0, 0
+genderVal = 0
+for fullName in dfCopy['Name']:
+    tokFullName = tk.tokenize(fullName)
+    if (classifier.classify(gender_features(tokFullName[0])) == 'female'):
+        numF += 1
+        genderVal -= 1
+    else:
+        numM += 1
+        genderVal += 1
+        
+tempGDict = {'Department':[dfCopy['Department'].iloc[0]], 'Females':[numF], 'Males':[numM], 'Gender Value':[genderVal], 'Gender Ratio':[numF/numM]}
+tempGDf = pd.DataFrame.from_dict(tempGDict)
+display(tempGDf)
+
+
